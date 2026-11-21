@@ -22,8 +22,16 @@ NONE_COLS = [
 ]
 ZERO_COLS = [
     "BsmtFinSF1", "BsmtFinSF2", "BsmtUnfSF", "TotalBsmtSF", "BsmtFullBath", "BsmtHalfBath",
-    "GarageYrBlt", "GarageCars", "GarageArea", "MasVnrArea",
+    "GarageCars", "GarageArea", "MasVnrArea",
 ]
+# If the house HAS the facility (area > 0) but a descriptive column is NA, the value is
+# truly missing (not "None") -> fill with the most common value among houses that have it.
+FACILITY_COLS = {
+    "GarageArea": ["GarageType", "GarageFinish", "GarageQual", "GarageCond"],
+    "TotalBsmtSF": ["BsmtQual", "BsmtCond", "BsmtExposure", "BsmtFinType1", "BsmtFinType2"],
+    "MasVnrArea": ["MasVnrType"],
+    "PoolArea": ["PoolQC"],
+}
 # Quality columns are ordered: Ex > Gd > TA > Fa > Po > None
 QUALITY_MAP = {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}
 QUALITY_COLS = [
@@ -45,8 +53,17 @@ def fix_types(df):
 def fill_missing(df):
     """Handle missing values."""
     df = df.copy()
+    for area_col, cols in FACILITY_COLS.items():
+        has = df[area_col].fillna(0) > 0
+        for col in cols:
+            df.loc[has & df[col].isna(), col] = df.loc[has, col].mode()[0]
     df[NONE_COLS] = df[NONE_COLS].fillna("None")
     df[ZERO_COLS] = df[ZERO_COLS].fillna(0)
+    # Garage year: typo in the test set (2207 -> remodel year 2007); no garage -> use the
+    # house's build year instead of 0, which would look like a garage built in year 0
+    typo = df["GarageYrBlt"] > 2010
+    df.loc[typo, "GarageYrBlt"] = df.loc[typo, "YearRemodAdd"]
+    df["GarageYrBlt"] = df["GarageYrBlt"].fillna(df["YearBuilt"])
     # Houses in the same neighborhood have similar street frontage -> use the neighborhood median
     df["LotFrontage"] = df.groupby("Neighborhood")["LotFrontage"].transform(
         lambda s: s.fillna(s.median())

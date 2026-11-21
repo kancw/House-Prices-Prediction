@@ -35,7 +35,8 @@ VERSIONS = {
 
     # ---------------- iter2: data cleaning
     "iter2_cleaned": dict(
-        _CLEANED, desc="+ removed 2 GrLivArea outliers + filled NA as None/0 by meaning"),
+        _CLEANED,
+        desc="+ removed 2 GrLivArea outliers + NA filled by meaning (None/0/mode) + GarageYrBlt fix"),
     "iter2a_outliers_only": dict(
         _BASE, drop_outliers=True, cv_only=True,
         desc="[Breakdown] iter1 + outlier removal only"),

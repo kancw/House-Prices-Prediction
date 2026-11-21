@@ -1,7 +1,7 @@
 # Competition rules do not allow redistributing the data -> do not commit it
 data/*.csv
 data/*.txt
-data/*.zip
+*.zip
 
 .venv/
 __pycache__/

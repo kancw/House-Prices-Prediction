@@ -30,10 +30,12 @@ House-Prices-Prediction/
 
 ## Roles
 
-| Member | Responsible for | Main files |
-|---|---|---|
-| A: data and features | EDA, missing values, encoding, new features, ablation | `notebooks/01`, `02`, `src/features.py` |
-| B: modeling and submissions | versions, models, tuning, blending, Kaggle submissions, log | `notebooks/03`, `src/models.py`, `src/versions.py` |
+| Member | Stages | Responsible for | Main files |
+|---|---|---|---|
+| A | 1 & 2: data & cleaning | EDA, baseline, outliers, missing values; uploads iter1, iter2 | `notebooks/01`, `src/data.py`, cleaning steps in `src/features.py` |
+| B | 3 & 4: features & modeling | features, ablation, tuning, ensemble; uploads iter3, iter4 + screenshot | `notebooks/02`, `03`, feature steps in `src/features.py`, `src/models.py` |
+
+Full task list, handoffs and timeline: [docs/team_plan.md](docs/team_plan.md).
 
 ## Setup
 
@@ -76,10 +78,10 @@ python run.py iter3_features --ablate   # ablation: which feature step helps mos
 
 ## Workflow
 
-1. A tries new features in notebook `02` -> moves the useful ones into `src/features.py`
-2. B runs `python run.py iterN_...`
-3. B uploads `submissions/sub_iterN_....csv` to Kaggle
-4. B fills the Kaggle score into the `kaggle_score` column of `reports/submission_log.csv`
+1. The stage owner updates their code (A: Stages 1-2, B: Stages 3-4)
+2. The owner runs `python run.py iterN_...`
+3. The owner uploads `submissions/sub_iterN_....csv` to Kaggle
+4. The owner fills the Kaggle score into the `kaggle_score` column of `reports/submission_log.csv`
 5. commit + push
 
 ## Running on Kaggle Notebook
