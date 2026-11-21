@@ -1,0 +1,10 @@
+# 比賽規則不允許轉發資料 → 不上傳 CSV
+data/*.csv
+data/*.txt
+data/*.zip
+
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
