@@ -1,17 +1,17 @@
 # data/
 
-把 Kaggle 下載的檔案放在這裡（不會上傳到 git）：
+Put the files downloaded from Kaggle here (they are not committed to git):
 
 - `train.csv`
 - `test.csv`
 - `data_description.txt`
 - `sample_submission.csv`
 
-下載方式（二選一）：
+How to download (either):
 
-1. 網頁：比賽頁 → Data → Download All，解壓到這個資料夾
-2. Kaggle CLI（需先設定 API token）：
+1. Web: competition page -> Data -> Download All, unzip into this folder
+2. Kaggle CLI (set up your API token first):
    ```
    kaggle competitions download -c house-prices-advanced-regression-techniques -p data
    ```
-   然後解壓 zip。
+   then unzip.

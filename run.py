@@ -1,10 +1,10 @@
-"""命令列入口。
+"""Command-line entry point.
 
-  python run.py --list                    列出所有版本
-  python run.py iter1_baseline            跑 iter1：CV + 產生 submissions/sub_iter1_baseline.csv + 更新紀錄表
-  python run.py iter1_baseline --cv-only  只看 CV 分數，不產生提交檔
-  python run.py --all                     依序跑所有版本（細分版本只跑 CV）
-  python run.py iter3_features --ablate   ablation：逐一拿掉 iter3 的特徵步驟
+  python run.py --list                    list all versions
+  python run.py iter1_baseline            run iter1: CV + submissions/sub_iter1_baseline.csv + update log
+  python run.py iter1_baseline --cv-only  CV score only, no submission file
+  python run.py --all                     run every version (breakdown versions are CV only)
+  python run.py iter3_features --ablate   ablation: remove iter3 feature steps one at a time
 """
 import argparse
 
@@ -13,17 +13,17 @@ from src.versions import VERSIONS
 
 
 def main():
-    p = argparse.ArgumentParser(description="House Prices 實驗執行器")
-    p.add_argument("version", nargs="?", help="版本名稱，例如 iter1_baseline")
-    p.add_argument("--list", action="store_true", help="列出所有版本")
-    p.add_argument("--all", action="store_true", help="依序跑所有版本")
-    p.add_argument("--cv-only", action="store_true", help="只跑 CV，不寫提交檔")
-    p.add_argument("--ablate", action="store_true", help="對指定版本做 ablation")
+    p = argparse.ArgumentParser(description="House Prices experiment runner")
+    p.add_argument("version", nargs="?", help="version name, e.g. iter1_baseline")
+    p.add_argument("--list", action="store_true", help="list all versions")
+    p.add_argument("--all", action="store_true", help="run every version in order")
+    p.add_argument("--cv-only", action="store_true", help="CV only, do not write a submission file")
+    p.add_argument("--ablate", action="store_true", help="run an ablation for the given version")
     args = p.parse_args()
 
     if args.list or not (args.version or args.all):
         for v, cfg in VERSIONS.items():
-            tag = "  CV" if cfg["cv_only"] else "提交"
+            tag = "CV    " if cfg["cv_only"] else "SUBMIT"
             print(f"[{tag}] {v:<22} {cfg['desc']}")
         return
     if args.all:
@@ -31,7 +31,7 @@ def main():
             run_version(v, submit=not args.cv_only)
         return
     if args.version not in VERSIONS:
-        p.error(f"沒有版本 {args.version}，用 --list 看可用版本")
+        p.error(f"No version named {args.version}; use --list to see available versions")
     if args.ablate:
         ablation(args.version)
     else:
