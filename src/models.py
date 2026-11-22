@@ -85,11 +85,30 @@ def fit_predict(model, X_train, y, X_pred, log_target):
     return model.predict(X_pred)
 
 
-def cross_validate(model, X, y, log_target):
-    """K-fold CV. Returns (mean score, std). y is the raw price."""
+def cv_predict(model, X, y, log_target, train_mask=None):
+    """K-fold CV over ALL rows of X. Returns (folds, oof):
+      folds: list of (validation indices, predictions) per fold
+      oof:   out-of-fold prediction for every row (each row is predicted exactly once)
+
+    train_mask: boolean array; rows that are False (e.g. outliers) are left out of the
+    TRAINING part of every fold but still predicted and scored in validation. This keeps
+    the validation houses identical across versions, so their scores are comparable.
+    """
     kf = KFold(n_splits=N_FOLDS, shuffle=True, random_state=SEED)
-    scores = []
+    folds, oof = [], np.zeros(len(y))
     for tr, va in kf.split(X):
+        if train_mask is not None:
+            tr = tr[np.asarray(train_mask)[tr]]
         pred = fit_predict(model, X.iloc[tr], y.iloc[tr], X.iloc[va], log_target)
-        scores.append(rmse_log(y.iloc[va], pred))
+        folds.append((va, pred))
+        oof[va] = pred
+    return folds, oof
+
+
+def cross_validate(model, X, y, log_target, train_mask=None, score_mask=None):
+    """K-fold CV. Returns (mean score, std) over folds. y is the raw price.
+    score_mask: boolean array; only rows that are True are scored (default: all rows)."""
+    folds, _ = cv_predict(model, X, y, log_target, train_mask)
+    keep = np.ones(len(y), bool) if score_mask is None else np.asarray(score_mask)
+    scores = [rmse_log(y.iloc[va][keep[va]], pred[keep[va]]) for va, pred in folds]
     return float(np.mean(scores)), float(np.std(scores))

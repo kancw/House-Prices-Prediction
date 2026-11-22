@@ -14,8 +14,12 @@ def load_data():
     return pd.read_csv(train_path), pd.read_csv(test_path)
 
 
+def outlier_mask(train: pd.DataFrame) -> pd.Series:
+    """True for houses with a huge living area but a low price (Id 524 and 1299:
+    unfinished new houses sold as Partial sales in Edwards, see notebooks/01_eda)."""
+    return (train["GrLivArea"] > 4000) & (train[TARGET] < 300000)
+
+
 def remove_outliers(train: pd.DataFrame) -> pd.DataFrame:
-    """Drop houses with a huge living area but a low price
-    (the 2 points visible in the GrLivArea vs SalePrice scatter plot during EDA)."""
-    mask = (train["GrLivArea"] > 4000) & (train[TARGET] < 300000)
-    return train.loc[~mask].reset_index(drop=True)
+    """Drop the outlier houses."""
+    return train.loc[~outlier_mask(train)].reset_index(drop=True)
