@@ -1,0 +1,6 @@
+version,removed_step,cv_rmse,delta,cv_rmse_normal,delta_normal
+iter3_features,add_features,0.12695,0.00024,0.11491,0.00064
+iter3_features,fix_skew,0.13835,0.01164,0.11438,0.00011
+iter3_features,(none),0.12671,0.0,0.11427,0.0
+iter3_features,add_interactions,0.12647,-0.00024,0.11396,-0.0003
+iter3_features,encode_ordinal,0.12612,-0.00059,0.1132,-0.00107

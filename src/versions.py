@@ -7,15 +7,6 @@ Two kinds:
                  which change helped most.
 
 Also, `python run.py iter3_features --ablate` removes each iter3 feature step one at a time.
-
-Fields
-  desc          what changed (written to submission_log.csv, reused in the report)
-  steps         enabled feature steps (see features.STEPS)
-  numeric_only  use numeric columns only
-  log_target    train on log(SalePrice)
-  drop_outliers remove the GrLivArea outliers
-  model         model name (see models.MODELS) or {"blend": [...]}
-  cv_only       True = CV only, no submission file
 """
 
 _BASE = dict(steps=[], numeric_only=False, log_target=True, drop_outliers=False,
@@ -23,7 +14,10 @@ _BASE = dict(steps=[], numeric_only=False, log_target=True, drop_outliers=False,
 
 _CLEANED = dict(_BASE, steps=["fix_types", "fill_missing"], drop_outliers=True)
 
-_FEATURES = dict(_CLEANED, steps=_CLEANED["steps"] + ["encode_ordinal", "add_features", "fix_skew"])
+_FEATURES = dict(
+    _CLEANED,
+    steps=_CLEANED["steps"] + ["encode_ordinal", "add_features", "add_interactions", "fix_skew"],
+)
 
 VERSIONS = {
     # ---------------- iter1: starting point
@@ -47,7 +41,7 @@ VERSIONS = {
     # ---------------- iter3: feature engineering (use --ablate to see each step's contribution)
     "iter3_features": dict(
         _FEATURES,
-        desc="+ ordinal quality encoding, new features (TotalSF, TotalBath, HouseAge...), skew log1p"),
+        desc="+ ordinal quality encoding, new features (TotalSF, TotalBath, HouseAge...), interactions, skew log1p"),
 
     # ---------------- iter4: models
     "iter4_ensemble": dict(

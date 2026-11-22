@@ -103,16 +103,42 @@ def ablation(version, steps=None):
     gets worse (bigger increase = more useful step)."""
     cfg = VERSIONS[version]
     data = load_data()
-    base, _ = evaluate(cfg, data)
-    rows = [{"version": version, "removed_step": "(none)", "cv_rmse": round(base, 5), "delta": 0.0}]
-    print(f"[{version}] full CV = {base:.5f}")
-    for step in steps or cfg["steps"]:
+    base_scores = score_cv(cfg, data)
+    base_all = base_scores["cv_rmse"]
+    base_norm = base_scores["cv_rmse_normal"]
+
+    rows = [{
+        "version": version,
+        "removed_step": "(none)",
+        "cv_rmse": round(base_all, 5),
+        "delta": 0.0,
+        "cv_rmse_normal": round(base_norm, 5),
+        "delta_normal": 0.0,
+    }]
+    print(f"[{version}] full CV (all) = {base_all:.5f} | normal = {base_norm:.5f}")
+
+    target_steps = steps or ["encode_ordinal", "add_features", "add_interactions", "fix_skew"]
+    for step in target_steps:
+        if step not in cfg["steps"]:
+            continue
         reduced = {**cfg, "steps": [s for s in cfg["steps"] if s != step]}
-        score, _ = evaluate(reduced, data)
-        rows.append({"version": version, "removed_step": step,
-                     "cv_rmse": round(score, 5), "delta": round(score - base, 5)})
-        print(f"  without {step:<15} CV = {score:.5f}  (change {score - base:+.5f})")
-    result = pd.DataFrame(rows).sort_values("delta", ascending=False)
+        s = score_cv(reduced, data)
+        d_all = s["cv_rmse"] - base_all
+        d_norm = s["cv_rmse_normal"] - base_norm
+        rows.append({
+            "version": version,
+            "removed_step": step,
+            "cv_rmse": round(s["cv_rmse"], 5),
+            "delta": round(d_all, 5),
+            "cv_rmse_normal": round(s["cv_rmse_normal"], 5),
+            "delta_normal": round(d_norm, 5),
+        })
+        print(
+            f"  without {step:<16} CV (all) = {s['cv_rmse']:.5f} ({d_all:+.5f})"
+            f" | normal = {s['cv_rmse_normal']:.5f} ({d_norm:+.5f})"
+        )
+
+    result = pd.DataFrame(rows).sort_values("delta_normal", ascending=False)
     ABLATION_LOG.parent.mkdir(exist_ok=True)
     result.to_csv(ABLATION_LOG, index=False)
     return result

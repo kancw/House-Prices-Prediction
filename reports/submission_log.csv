@@ -1,6 +1,11 @@
 version,submitted,date,description,cv_rmse,cv_std,cv_rmse_normal,kaggle_score,note
 iter1_baseline,True,2026-11-22,"Baseline: raw data, median fill, one-hot categories, log(SalePrice), Ridge",0.14644,0.03923,0.12309,0.13241,
-iter1_no_log,False,2026-11-22,[Control] iter1 without log(SalePrice) -> effect of the log transform,0.15389,0.01588,0.14415,,
-iter2_cleaned,True,2026-11-22,+ removed 2 GrLivArea outliers + NA filled by meaning (None/0/mode) + GarageYrBlt fix,0.13696,0.04336,0.11405,0.13281,Submitted file was made before the fair-CV change; current code output differs by <0.02% per house
-iter2a_outliers_only,False,2026-11-22,[Breakdown] iter1 + outlier removal only,0.13722,0.04388,0.11387,,
-iter2b_missing_only,False,2026-11-22,[Breakdown] iter1 + missing-value fix only,0.14615,0.03875,0.12324,,
+iter1_no_log,False,11/22/2026,[Control] iter1 without log(SalePrice) -> effect of the log transform,0.15389,0.01588,0.14415,,
+iter2_cleaned,True,11/22/2026,+ removed 2 GrLivArea outliers + NA filled by meaning (None/0/mode) + GarageYrBlt fix,0.13696,0.04336,0.11405,0.13281,Submitted file was made before the fair-CV change; current code output differs by <0.02% per house
+iter2a_outliers_only,False,11/22/2026,[Breakdown] iter1 + outlier removal only,0.13722,0.04388,0.11387,,
+iter2b_missing_only,False,11/22/2026,[Breakdown] iter1 + missing-value fix only,0.14615,0.03875,0.12324,,
+iter3_features,True,11/22/2026,#NAME?,0.12671,0.02244,0.11427,0.123,
+iter4a_lasso,False,11/22/2026,[Breakdown] iter3 features + Lasso alone,0.12446,0.02177,0.11296,,
+iter4b_elasticnet,False,11/22/2026,[Breakdown] iter3 features + ElasticNet alone,0.1244,0.02169,0.1129,,
+iter4c_gbr,False,11/22/2026,[Breakdown] iter3 features + Gradient Boosting alone,0.12137,0.02224,0.11118,,
+iter4_ensemble,True,11/22/2026,Blend: average of Ridge + Lasso + ElasticNet + Gradient Boosting,0.12092,0.02211,0.10928,0.12136,

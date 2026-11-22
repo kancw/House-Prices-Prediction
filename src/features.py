@@ -1,13 +1,8 @@
-"""Feature engineering (owned by member A).
+"""Feature engineering (Stage 1-2 cleaning by A, Stage 3 features by B).
 
 Each step is a function: it takes a DataFrame (train+test combined, without SalePrice)
 and returns the processed DataFrame. Steps are registered by name in STEPS, and
-versions.py picks which steps to enable by name. This makes it easy to:
-  - measure how much each step improves the score
-  - run an ablation: remove one step and see how much worse the score gets
-    (answers "which feature engineering was most useful?")
-
-To add a feature: write a new function -> add it to STEPS -> enable it in versions.py.
+versions.py picks which steps to enable by name.
 """
 import numpy as np
 import pandas as pd
@@ -85,7 +80,7 @@ def encode_ordinal(df):
 
 
 def add_features(df):
-    """New hand-crafted features."""
+    """New hand-crafted domain features."""
     df = df.copy()
     yr_sold = df["YrSold"].astype(int)
     df["TotalSF"] = df["TotalBsmtSF"] + df["1stFlrSF"] + df["2ndFlrSF"]
@@ -93,13 +88,26 @@ def add_features(df):
                        + df["BsmtFullBath"] + 0.5 * df["BsmtHalfBath"])
     df["TotalPorchSF"] = (df["OpenPorchSF"] + df["EnclosedPorch"] + df["3SsnPorch"]
                           + df["ScreenPorch"] + df["WoodDeckSF"])
-    df["HouseAge"] = yr_sold - df["YearBuilt"]
-    df["RemodAge"] = yr_sold - df["YearRemodAdd"]
+    # Clip at 0 to fix negative ages on test Id 2550 (YrSold < YearBuilt) and Id 1877 (YearRemodAdd < YearBuilt)
+    df["HouseAge"] = (yr_sold - df["YearBuilt"]).clip(lower=0)
+    df["RemodAge"] = (yr_sold - df["YearRemodAdd"]).clip(lower=0)
+    df["IsRemodeled"] = (df["YearBuilt"] != df["YearRemodAdd"]).astype(int)
     df["HasPool"] = (df["PoolArea"] > 0).astype(int)
     df["HasGarage"] = (df["GarageArea"] > 0).astype(int)
     df["HasBsmt"] = (df["TotalBsmtSF"] > 0).astype(int)
     df["Has2ndFlr"] = (df["2ndFlrSF"] > 0).astype(int)
     df["HasFireplace"] = (df["Fireplaces"] > 0).astype(int)
+    return df
+
+
+def add_interactions(df):
+    """Quality x Area interaction terms."""
+    df = df.copy()
+    total_sf = df["TotalSF"] if "TotalSF" in df.columns else (
+        df["TotalBsmtSF"] + df["1stFlrSF"] + df["2ndFlrSF"]
+    )
+    df["OverallQual_x_TotalSF"] = df["OverallQual"] * total_sf
+    df["OverallQual_x_GrLivArea"] = df["OverallQual"] * df["GrLivArea"]
     return df
 
 
@@ -119,6 +127,7 @@ STEPS = {
     "fill_missing": fill_missing,
     "encode_ordinal": encode_ordinal,
     "add_features": add_features,
+    "add_interactions": add_interactions,
     "fix_skew": fix_skew,
 }
 
@@ -126,12 +135,7 @@ STEPS = {
 # ---------------------------------------------------------------- build
 
 def build_features(train, test, steps, numeric_only=False):
-    """Apply `steps` to train+test and return (X_train, X_test).
-
-    train and test are processed together so one-hot columns match
-    (common practice in this competition).
-    numeric_only=True: keep numeric columns only.
-    """
+    """Apply `steps` to train+test and return (X_train, X_test)."""
     unknown = set(steps) - set(STEPS)
     if unknown:
         raise ValueError(f"Unknown feature steps: {unknown}. Available: {list(STEPS)}")
