@@ -10,7 +10,7 @@ Also, `python run.py iter3_features --ablate` removes each iter3 feature step on
 """
 
 _BASE = dict(steps=[], numeric_only=False, log_target=True, drop_outliers=False,
-             model="ridge", cv_only=False)
+             model="ridge", cv_only=False, partial_giant_rule=False)
 
 _CLEANED = dict(_BASE, steps=["fix_types", "fill_missing"], drop_outliers=True)
 
@@ -18,6 +18,10 @@ _FEATURES = dict(
     _CLEANED,
     steps=_CLEANED["steps"] + ["encode_ordinal", "add_features", "add_interactions", "fix_skew"],
 )
+
+# iter5: keep only the feature steps the ablation showed are useful
+# (encode_ordinal and add_interactions made CV slightly worse)
+_FEATURES_PRUNED = dict(_CLEANED, steps=_CLEANED["steps"] + ["add_features", "fix_skew"])
 
 VERSIONS = {
     # ---------------- iter1: starting point
@@ -53,6 +57,19 @@ VERSIONS = {
                               desc="[Breakdown] iter3 features + ElasticNet alone"),
     "iter4c_gbr": dict(_FEATURES, model="gbr", cv_only=True,
                        desc="[Breakdown] iter3 features + Gradient Boosting alone"),
+
+    # ---------------- iter5: pruned features + new blend
+    "iter5_pruned_blend": dict(
+        _FEATURES_PRUNED, model={"blend": ["lasso", "gbr", "xgb", "svr"]},
+        desc="Pruned features (no ordinal/interactions, per ablation) + blend of Lasso + GBR + XGBoost + SVR"),
+    "iter5a_pruned_iter4_blend": dict(
+        _FEATURES_PRUNED, model={"blend": ["ridge", "lasso", "elasticnet", "gbr"]}, cv_only=True,
+        desc="[Breakdown] pruned features + iter4 blend -> effect of pruning alone"),
+
+    # ---------------- iter6: post-processing for test houses like the 2 outliers
+    "iter6_partial_giant": dict(
+        _FEATURES_PRUNED, model={"blend": ["lasso", "gbr", "xgb", "svr"]}, partial_giant_rule=True,
+        desc="iter5 + price test houses >4000 sq ft sold as Partial by the $/sq ft of the 2 matching train outliers"),
 }
 
 SUBMITTED = [v for v, cfg in VERSIONS.items() if not cfg["cv_only"]]

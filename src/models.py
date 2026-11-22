@@ -9,6 +9,7 @@ from sklearn.linear_model import ElasticNet, Lasso, LinearRegression, Ridge
 from sklearn.model_selection import KFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import RobustScaler
+from sklearn.svm import SVR
 
 from src.config import N_FOLDS, SEED
 
@@ -37,6 +38,7 @@ MODELS = {
     "gbr": lambda: GradientBoostingRegressor(n_estimators=3000, learning_rate=0.03, max_depth=4,
                                              max_features="sqrt", min_samples_leaf=15,
                                              loss="huber", random_state=SEED),
+    "svr": lambda: make_pipeline(RobustScaler(), SVR(C=20, epsilon=0.008, gamma=0.0003)),
     "xgb": _xgb,
     "lgbm": _lgbm,
 }

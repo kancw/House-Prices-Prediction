@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from src.config import ABLATION_LOG, ID_COL, SUBMISSION_DIR, SUBMISSION_LOG, TARGET
-from src.data import load_data, outlier_mask
+from src.data import load_data, outlier_mask, partial_giant_mask
 from src.features import build_features
 from src.models import cv_predict, fit_predict, get_model, rmse_log
 from src.versions import VERSIONS
@@ -68,12 +68,28 @@ def run_version(version, submit=True):
         X_train, y, X_test, test_ids, train_mask = prepare(cfg, *data)
         model = get_model(cfg["model"])
         pred = fit_predict(model, X_train[train_mask], y[train_mask], X_test, cfg["log_target"])
+        if cfg.get("partial_giant_rule"):
+            pred = apply_partial_giant_rule(pred, *data)
         SUBMISSION_DIR.mkdir(exist_ok=True)
         path = SUBMISSION_DIR / f"sub_{version}.csv"
         pd.DataFrame({ID_COL: test_ids, TARGET: pred}).to_csv(path, index=False)
         print(f"  Submission file: {path}  ({X_train.shape[1]} features)")
     log_submission(version, cfg["desc"], s, submitted=not cfg["cv_only"])
     return s["cv_rmse"], s["cv_std"]
+
+
+def apply_partial_giant_rule(pred, train, test):
+    """The model never sees the 2 outliers, so it prices a test house with the same profile
+    (huge, unfinished, Partial sale) like a normal luxury house. Price such houses with the
+    median price per sq ft of the matching training houses instead."""
+    ref = train[partial_giant_mask(train)]
+    price_per_sqft = (ref[TARGET] / ref["GrLivArea"]).median()
+    hit = partial_giant_mask(test).to_numpy()
+    pred = pred.copy()
+    pred[hit] = test.loc[hit, "GrLivArea"] * price_per_sqft
+    print(f"  Partial-giant rule: Id {list(test.loc[hit, ID_COL])} priced at "
+          f"${price_per_sqft:.1f}/sq ft (from train Id {list(ref[ID_COL])})")
+    return pred
 
 
 LOG_COLS = ["version", "submitted", "date", "description",

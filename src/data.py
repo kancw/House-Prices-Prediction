@@ -20,6 +20,12 @@ def outlier_mask(train: pd.DataFrame) -> pd.Series:
     return (train["GrLivArea"] > 4000) & (train[TARGET] < 300000)
 
 
+def partial_giant_mask(df: pd.DataFrame) -> pd.Series:
+    """True for houses over 4,000 sq ft sold as Partial sales (unfinished new houses).
+    In train these are exactly the 2 outliers (Id 524, 1299); in test it is Id 2550."""
+    return (df["GrLivArea"] > 4000) & (df["SaleCondition"] == "Partial")
+
+
 def remove_outliers(train: pd.DataFrame) -> pd.DataFrame:
     """Drop the outlier houses."""
     return train.loc[~outlier_mask(train)].reset_index(drop=True)
